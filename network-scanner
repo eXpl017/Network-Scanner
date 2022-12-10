@@ -1,0 +1,35 @@
+#!/usr/bin/python3.8
+
+import scapy.all as scapy
+import argparse
+
+def get_arguments():
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-t','--target',dest='target',help='Target IP/range')
+	args = parser.parse_args()
+
+	if not args.target:
+		parser.error('Please enter a valid IP/range!')
+
+	return args
+
+def scan(ip):
+	arp_req = scapy.ARP(pdst=ip)
+	broadcast = scapy.Ether(dst='ff:ff:ff:ff:ff:ff')
+	packet = broadcast/arp_req
+	answer = scapy.srp(packet,timeout=0.1,verbose=False)[0]
+	
+	result_list = []
+	for i in answer:
+		dic = {'ip':i[1].psrc,'mac':i[1].hwsrc}
+		result_list.append(dic)
+	printresult(result_list)
+
+def printresult(result_list):
+	print('IP\t\t\tMAC')
+	print('-------------------------------------')
+	for i in result_list:
+		print(i['ip'] + '\t\t' + i['mac'])
+
+args = get_arguments()
+scan(args.target)
